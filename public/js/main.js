@@ -20,6 +20,29 @@ signupForm.addEventListener("submit", async (e) => {
 });
 
 
+sendBtn.addEventListener("click", async () => {
+  const msg = messageInput.value.trim();
+  if (msg !== "") {
+    addMessage(msg, "sent");
+
+    // Example userId (you can use logged-in user's ID)
+    const userId = "user123";
+
+    // Save message to backend
+    await fetch("http://localhost:5000/api/chats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, message: msg }),
+    });
+
+    messageInput.value = "";
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+});
+
+
+
+
 // LOGIN
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
