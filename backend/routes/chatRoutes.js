@@ -1,34 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const Message = require("../models/Message");
+const db = require("../config/db");
 
 // 🟢 POST - Save a new chat message
 router.post("/", async (req, res) => {
-  try {
-    const { userId, message } = req.body;
+  const { userId, message } = req.body;
 
-    if (!userId || !message) {
-      return res.status(400).json({ message: "userId and message required" });
-    }
-
-    const newMessage = new Message({ userId, message });
-    await newMessage.save();
-
-    res.status(201).json({ message: "Message saved", data: newMessage });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+  if (!userId || !message) {
+    return res.status(400).json({ message: "userId and message required" });
   }
+
+  const sql = "INSERT INTO messages (userId, message) VALUES (?, ?)";
+  db.query(sql, [userId, message], (err, result) => {
+    if (err) {
+      console.error("❌ MySQL Insert Error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    res.status(201).json({
+      message: "Message saved",
+      data: { id: result.insertId, userId, message },
+    });
+  });
 });
 
 // 🟢 GET - Fetch all messages
-router.get("/", async (req, res) => {
-  try {
-    const messages = await Message.find().sort({ createdAt: 1 });
-    res.json(messages);
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
+router.get("/", (req, res) => {
+  const sql = "SELECT * FROM messages ORDER BY createdAt ASC";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("❌ MySQL Fetch Error:", err);
+      return res.status(500).json({ message: "Database error" });
+    }
+    res.status(200).json(results);
+  });
 });
 
 module.exports = router;
